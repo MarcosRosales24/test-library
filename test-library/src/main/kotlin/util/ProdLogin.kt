@@ -12,16 +12,13 @@ import java.util.*
 
 class ProdLogin {
     companion object {
-
-
         fun loginProduction(email: String, password: String,companyName: String,branch: String?): String? {
             var cauth: String? = null
             val co = ChromeOptions()
             with(co) {
                 addArguments("--remote-allow-origins=*")
                 addArguments("--allowed-ips")
-                //addArguments("--headless")
-
+                addArguments("--headless")
             }
             val driver = ChromeDriver(co)
             val devTools = driver.devTools
@@ -44,7 +41,44 @@ class ProdLogin {
                 }
 
             }
-            driver["https://app.sicarx.com/"]
+
+            val login = verifiedLogin(
+                driver = driver,
+                url ="https://app.sicarx.com/",
+                email =email,
+                password = password
+            )
+            if (login){
+                val existsCompany = try {
+                    driver.findElement(By.xpath("//div[contains(text(),'$companyName')]")).click()
+                    true
+                } catch (e: NoSuchElementException) {
+                    println("Login error  $e")
+                    false
+                }
+
+                println("Exist Company $existsCompany")
+                if (existsCompany){
+                    try {
+                        driver.findElement(By.xpath("//div[contains(text(),'$companyName')]")).click()
+                        Thread.sleep(1500L)
+                    }catch (e: StaleElementReferenceException){
+                        println("error al seleccionar company : $e")
+                    }
+
+                    if (branch!= null){
+                        clickEnterOnBranch(driver, branch)
+                        Thread.sleep(1500L)
+                    }
+                }
+            }
+            println(cauth)
+            driver.quit()
+            return cauth
+        }
+
+        fun verifiedLogin(driver: ChromeDriver,url: String,email:String,password:String):Boolean{
+            driver[url]
             Thread.sleep(2000L)
             val emailField = driver.findElement(By.id("email"))
             val passwordField = driver.findElement(By.id("password"))
@@ -53,32 +87,14 @@ class ProdLogin {
             passwordField.sendKeys(password)
             boton.click()
             Thread.sleep(2000L)
-
-            val existsCompany = try {
-                driver.findElement(By.xpath("//div[contains(text(),'$companyName')]")).click()
+            return if (driver.currentUrl != "https://app.sicarx.com/") {
+                println("Inicio de sesión exitoso.")
                 true
-            } catch (e: NoSuchElementException) {
+            } else {
+                println("Inicio de sesión fallido.")
                 false
             }
 
-            println("Exist Company $existsCompany")
-            if (existsCompany){
-                val company = driver.findElement(By.xpath("//div[contains(text(),'$companyName')]"))
-                company.click()
-                Thread.sleep(1500L)
-
-                if (branch!= null){
-                    clickEnterOnBranch(driver, branch)
-                    Thread.sleep(1500L)
-                }
-            }
-
-
-
-            println(cauth)
-            driver.quit()
-
-            return cauth
         }
 
 
@@ -88,7 +104,8 @@ class ProdLogin {
             val branchElement = try {
                 driver.findElement(By.xpath("//span[text()='$branchName']")).click()
                 true
-            }catch (e: NoSuchElementException){
+            }catch (e: StaleElementReferenceException){
+                println(e)
                 false
             }
             println("Exist Branch $branchElement")
@@ -100,18 +117,9 @@ class ProdLogin {
                 }catch (e: StaleElementReferenceException){
                     println(e)
                 }
-
-
             }
 
         }
-
-
-
-
-
-
-
     }
 
 }

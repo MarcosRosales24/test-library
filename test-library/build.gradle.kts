@@ -14,25 +14,10 @@ repositories {
 
 publishing {
     publications {
-        create<MavenPublication>("mavenKotlin") {
+        create<MavenPublication>("maven") {
+            artifactId = "test-library"
             from(components["java"])
 
-            groupId = group.toString()
-            artifactId = "test-library"
-            version = version.toString()
-
-            pom {
-                name.set("test-library")
-                description.set("library to test")
-                url.set("https://github.com/MarcosRosales24/test-library")
-
-//                licenses {
-//                    license {
-//                        name.set("The Apache Software License, Version 2.0")
-//                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
-//                    }
-//                }
-            }
         }
     }
     repositories {
@@ -44,9 +29,15 @@ publishing {
             }
         }
     }
-
 }
 
+allprojects {
+    group = "com.test"
+    kotlin {
+        jvmToolchain(18)
+    }
+
+}
 
 
 dependencies {
@@ -58,7 +49,4 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-}
-kotlin {
-    jvmToolchain(18)
 }
